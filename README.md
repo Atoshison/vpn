@@ -1,2 +1,1 @@
-VPN keys for Turkmenistan AGTS and Turkmen Telecom!!!
-Рабочие ключи для Nekobox и Hiddify в Туркменистане.
+Рабочие ключи VPN для AGTS и Телеком Туркменистан! Актуальные конфигурации для Nekobox и Hiddify
