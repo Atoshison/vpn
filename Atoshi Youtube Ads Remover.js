@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Remove ads from YouTube
-// @author       Atoshi
+// @author       ATOSHI
 // @match        https://www.youtube.com/*
 // @match        https://youtube.com/*
 // @grant        unsafeWindow
