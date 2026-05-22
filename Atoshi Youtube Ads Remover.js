@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         Atoshi YouTube Ads Remover
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Remove and skip all ads from YouTube (2026 - Fully Working)
-// @author       Atoshi
+// @author       Atoshi TM
 // @match        https://www.youtube.com/*
 // @match        https://youtube.com/*
 // @match        https://www.youtube-nocookie.com/*
 // @grant        unsafeWindow
 // @grant        GM_log
 // @run-at       document-start
-// @icon         https://www.youtube.com/favicon.ico
+// @icon         data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 60"><rect width="90" height="60" fill="%2322c55e" rx="8"/><path d="M 35 20 L 35 40 L 55 30 Z" fill="white"/></svg>
 // ==/UserScript==
 
 (function() {
