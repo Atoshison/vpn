@@ -21,8 +21,11 @@
         muteAds: true,
         autoPlayNextVideo: true,
         blockAdRequests: true,
-        interceptFetch: true
+        interceptFetch: true,
+        autoJumpNextChapter: true
     };
+
+    let jumpToNextChapterAfterAd = false;
 
     // Enhanced ad removal with 2026 selectors
     function removeAds() {
@@ -124,6 +127,83 @@
             }
         } catch (e) {
             console.log('Atoshi YouTube Ads Remover: Error muting ads -', e);
+        }
+    }
+
+    function getChapterList() {
+        try {
+            const response = window.ytInitialPlayerResponse ||
+                (window.ytplayer && window.ytplayer.config && window.ytplayer.config.args && window.ytplayer.config.args.player_response && JSON.parse(window.ytplayer.config.args.player_response));
+
+            let chapters = [];
+            if (response && Array.isArray(response.chapters)) {
+                chapters = response.chapters.map(ch => {
+                    const start = Number(ch.start_time ?? ch.start_seconds ?? ch.start);
+                    let title = '';
+                    if (ch.title) {
+                        if (typeof ch.title === 'string') title = ch.title;
+                        else if (ch.title.simpleText) title = ch.title.simpleText;
+                        else if (Array.isArray(ch.title.runs)) title = ch.title.runs.map(r => r.text).join('');
+                    }
+                    return { start, title };
+                });
+            }
+
+            if (!chapters.length) {
+                const chapterEls = document.querySelectorAll('ytd-player-chapters-renderer tp-yt-paper-item, .ytp-chapter-hover-container, .ytp-chapter-title');
+                chapterEls.forEach(el => {
+                    if (!el) return;
+                    const text = el.textContent || '';
+                    const startAttr = el.getAttribute('data-start-time') || el.getAttribute('data-start') || el.getAttribute('data-time');
+                    const start = Number(startAttr);
+                    if (!Number.isNaN(start)) {
+                        chapters.push({ start, title: text.trim() });
+                    } else {
+                        const match = text.match(/(\d+):(\d+)(?::(\d+))?/);
+                        if (match) {
+                            const secs = Number(match[1]) * 60 + Number(match[2]) + (match[3] ? Number(match[3]) * 3600 : 0);
+                            chapters.push({ start: secs, title: text.replace(match[0], '').trim() });
+                        }
+                    }
+                });
+            }
+
+            return chapters
+                .filter(ch => Number.isFinite(ch.start))
+                .sort((a, b) => a.start - b.start);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function isAdPlaying() {
+        const player = document.querySelector('.html5-video-player');
+        return Boolean(player && (player.classList.contains('ad-showing') || player.classList.contains('playing-ad') || player.classList.contains('ad-interrupting')));
+    }
+
+    function seekToNextChapter() {
+        if (!config.autoJumpNextChapter) return;
+        const video = document.querySelector('video');
+        if (!video) return;
+
+        const chapters = getChapterList();
+        if (!chapters.length) return;
+
+        const currentTime = video.currentTime;
+        const nextChapter = chapters.find(ch => ch.start > currentTime + 0.5);
+        if (nextChapter) {
+            video.currentTime = nextChapter.start;
+            console.log('Atoshi YouTube Ads Remover: Jumped to next chapter', nextChapter.title || nextChapter.start);
+        }
+    }
+
+    function handleAdChapterJump() {
+        const currentlyInAd = isAdPlaying();
+        if (currentlyInAd) {
+            jumpToNextChapterAfterAd = true;
+        } else if (jumpToNextChapterAfterAd) {
+            jumpToNextChapterAfterAd = false;
+            seekToNextChapter();
         }
     }
 
@@ -245,8 +325,10 @@
     setInterval(() => {
         removeAds();
         cleanGlobalData();
-    }, 500);
-    
-    setInterval(skipAds, 1000);
-
-})();
+            handleAdChapterJump();
+        }, 500);
+        
+        setInterval(() => {
+            skipAds();
+            handleAdChapterJump();
+        }, 1000);
